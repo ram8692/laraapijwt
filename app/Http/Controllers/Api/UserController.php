@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
+
 
 class UserController extends Controller
 {
@@ -36,31 +38,29 @@ class UserController extends Controller
     }
 
 
-    public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
 
-        if (!$token = auth()->attempt(['email' => $request->email, 'password' => $request->password])) {
-            return response()->json(['message' => 'Unauthorized','status'=>0], 401);
-        }
+public function login(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
 
-        //get value of token
-        //i dont want true or false i want value of token
-        dd(auth()->user());
-        dd($token);
+    $credentials = $request->only('email', 'password');
 
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60,
-            'status' => 1,
-            'message' => 'Login Successful'
-        ]);
-
+    if (!$token = JWTAuth::attempt($credentials)) {
+        return response()->json(['message' => 'Unauthorized', 'status' => 0], 401);
     }
+
+    return response()->json([
+        'access_token' => $token,
+        'token_type' => 'bearer',
+        'status' => 1,
+        'message' => 'Login Successful'
+    ]);
+}
+
+    
 
     /**
      * Store a newly created resource in storage.
@@ -70,7 +70,8 @@ class UserController extends Controller
      */
     public function profile()
     {
-        //
+       // dd(1);
+        return response()->json(auth()->user());
     }
 
     /**
@@ -79,9 +80,14 @@ class UserController extends Controller
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function logout(User $user)
+    public function logout()
     {
-        //
+        auth()->logout();
+
+        return response()->json([
+            'message' => 'Successfully logged out',
+            'status' => 1
+            ]);
     }
 
 }
